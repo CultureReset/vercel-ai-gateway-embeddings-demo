@@ -1,35 +1,50 @@
-A simple [Next.js](https://nextjs.org) chatbot app to demonstrate the use of embedding models for RAG through the Vercel AI Gateway.
+# vercel-ai-gateway-embeddings-demo
 
-Paste any facts or docs into the chat and this app will chunk them, generate embeddings via the Vercel AI Gateway, and store them as vectors in Neon. When you ask a question, your query is embedded and the app performs a cosine-similarity search to pull the most relevant chunks. The model then answers using only the retrieved snippets, demonstrating semantic retrieval (RAG).
+A copy of Vercel's public sample chatbot that remembers facts you paste in and answers questions only from them (a basic retrieval-augmented generation demo). It is unrelated to the Gulf Coast / CyberCheck platform.
 
-## Getting Started
+## What it is
 
-### Setup
+A Next.js chat app. You paste text into the chat; the app splits it into sentences, turns each into an embedding through the Vercel AI Gateway, and stores it in Postgres. When you ask a question, the app embeds it, finds the closest stored sentences, and the model answers using only those, or replies "Sorry, I don't know." The README's deploy button points to the upstream project `vercel-labs/ai-gateway-embeddings-demo`, and the repo carries a Vercel `LICENSE.txt`. I could not diff it against upstream, so I do not know whether anything was changed.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel-labs%2Fai-gateway-embeddings-demo&amp;project-name=ai-gateway-embeddings&amp;repository-name=ai-gateway-embeddings&amp;demo-title=AI%20Gateway%20Embeddings%20Demo&amp;demo-description=A%20simple%20Next.js%20chatbot%20app%20to%20demonstrate%20the%20use%20of%20embedding%20models%20for%20RAG%20through%20the%20Vercel%20AI%20Gateway&amp;demo-url=https%3A%2F%2Fai-gateway-embeddings-demo.labs.vercel.dev&amp;products=%5B%7B%22type%22%3A%22integration%22%2C%22protocol%22%3A%22storage%22%2C%22productSlug%22%3A%22neon%22%2C%22integrationSlug%22%3A%22neon%22%7D%5D)
+## How it works
 
-1. Clone this repository with the Deploy button above
-1. Install the [Vercel CLI](https://vercel.com/docs/cli) if you don't already have it (`pnpm i -g vercel`)
-1. Clone the repository you created above: `git clone <repo-url>`
-1. Link it to a Vercel project: `vc link` or `vc deploy`
-1. Pull environment variables with `vc env pull`
-1. Install packages with `pnpm i` (or `npm i` or `yarn i`)
-1. Run a database migration with `pnpm db:migrate && pnpm db:push`
-1. Run the development server with `vc dev` and open http://localhost:3000 to try the chatbot
+- `app/page.tsx` - the chat UI.
+- `app/api/chat/route.ts` - streams a reply with the Vercel AI SDK (`streamText`, model `openai/gpt-4o`) and two tools: `addResource` and `getInformation`.
+- `lib/actions/resources.ts` - saves a pasted resource and its embeddings.
+- `lib/ai/embedding.ts` - splits text on `.`, embeds with `openai/text-embedding-ada-002`, and searches by cosine similarity (threshold 0.5, top 4).
+- `lib/db/schema/{resources,embeddings}.ts` and `lib/db/migrations/0000_yielding_bloodaxe.sql` - Drizzle schema and migration for Postgres with a vector column.
+- `lib/env.mjs` - requires `DATABASE_URL`.
 
-### FAQ
+## Run it
 
-1. If you prefer running your local development server directly rather than using `vc dev`, you'll need to run `vc env pull` to fetch the project's OIDC authentication token locally
-   1. the token expires every 12h, so you'll need to re-run this command periodically.
-   1. if you use `vc dev` it will auto-refresh the token for you, so you don't need to fetch it manually
-1. If you're linking to an existing, older project, you may need to enable the OIDC token feature in your project settings.
-   1. visit the project settings page (rightmost tab in your project's dashboard)
-   1. search for 'OIDC' in settings
-   1. toggle the button under "Secure Backend Access with OIDC Federation" to Enabled and click the "Save" button
-1. See [this page](https://vercel.com/docs/ai-gateway/pricing) to learn how AI Gateway billing works 
+Needs a Postgres database with pgvector (the original uses Neon) and a Vercel project for AI Gateway access.
 
-## Authors
+```bash
+vc link                 # link to a Vercel project
+vc env pull             # pulls DATABASE_URL and the AI Gateway OIDC token
+pnpm i
+pnpm db:migrate && pnpm db:push
+vc dev                  # http://localhost:3000
+```
 
-This repository is maintained by the [Vercel](https://vercel.com) team and community contributors. 
+Environment variable name required by the code: `DATABASE_URL`. AI Gateway access comes from Vercel's OIDC token via `vc env pull` (see the original README notes).
 
-Contributions are welcome! Feel free to open issues or submit pull requests to enhance functionality or fix bugs.
+## Status
+
+**Asset dump.** A third-party sample app parked in the account (single commit, 2026-04-04), with no link to any other CultureReset repo.
+
+## Where it fits
+
+```mermaid
+flowchart LR
+  user["Browser chat"] --> app["Next.js app"]
+  app -->|"streamText openai/gpt-4o"| gw["Vercel AI Gateway"]
+  app -->|"embed openai/text-embedding-ada-002"| gw
+  app -->|"Drizzle + cosine search"| pg[("Postgres / Neon with vectors")]
+  upstream["vercel-labs/ai-gateway-embeddings-demo"] -.->|copied from| app
+```
+
+## Related repos
+
+- Upstream: `vercel-labs/ai-gateway-embeddings-demo` (not a CultureReset repo).
+- No CultureReset repo uses or feeds this one.
