@@ -1,3 +1,13 @@
+> **CultureReset public copy of [vercel-labs/ai-gateway-embeddings-demo](https://github.com/vercel-labs/ai-gateway-embeddings-demo), not a GitHub fork.** A Next.js chatbot that shows embeddings and retrieval through the Vercel AI Gateway, with vectors stored in Neon.
+>
+> - **Why it is here:** A demo kept as a reference for retrieval with embeddings.
+> - **Does anything run from it:** No.
+> - **License and updates:** as upstream. For updates and issues, use [upstream](https://github.com/vercel-labs/ai-gateway-embeddings-demo).
+>
+> The upstream README follows unchanged.
+
+---
+
 A simple [Next.js](https://nextjs.org) chatbot app to demonstrate the use of embedding models for RAG through the Vercel AI Gateway.
 
 Paste any facts or docs into the chat and this app will chunk them, generate embeddings via the Vercel AI Gateway, and store them as vectors in Neon. When you ask a question, your query is embedded and the app performs a cosine-similarity search to pull the most relevant chunks. The model then answers using only the retrieved snippets, demonstrating semantic retrieval (RAG).
